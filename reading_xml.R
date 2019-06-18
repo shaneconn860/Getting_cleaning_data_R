@@ -15,6 +15,6 @@ rootNode[[1]][[1]]
 rootNode[[1]][[2]]
 
 
-#Return each specific value of a node
+#Loop through and return each specific value of a node
 xpathSApply(rootNode, "//name", xmlValue)
 xpathSApply(rootNode, "//policedistrict", xmlValue)
