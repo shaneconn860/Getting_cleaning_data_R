@@ -1,34 +1,45 @@
-library(dplyr)
+library(dplyr) #Load dplyr package
 
-fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2FEDSTATS_Country.csv"
-download.file(fileUrl, destfile = "./quiz3/edu.csv")
-edu <- read.csv("./quiz3/edu.csv")
+#Create directory first if it doesn't exist
 
-cran <- tbl_df(edu) #create data frame tbl
+if (!file.exists("./football_data")) {
+        dir.create("./football_data")
+}
+
+#Download file and load in to R
+fileUrl <- "http://www.football-data.co.uk/mmz4281/1819/E0.csv"
+download.file(fileUrl, destfile = "./football_data/prem18_19.csv")
+edu <- read.csv("./football_data/prem18_19.csv")
+
+prem <- tbl_df(edu) #create data frame tbl
 
 rm("edu") #remove original
 
-select(cran, CountryCode, Income.Group, Currency.Unit)
+select(prem, HomeTeam, AwayTeam, FTR) #displays teams and full-time result
 
-select(cran, r_arch:country)  #gives list of columns from left to right
+select(prem, HomeTeam:HTR)  #gives list of columns from left to right in that sequence
 
-select(cran, -time) #omits time column
+select(prem, -Referee) #omits Referee column
 
-select (cran, -(X:size)) #omits range of columns from X to size
+select (prem, -Referee, -(B365H:PSCA)) #omits range of columns containing betting info and Referee
 
-filter(cran, package == "swirl")
+tidy1 <- select (prem, -Div, -Referee, -(B365H:PSCA)) #create new variable to work with
 
-filter(cran, r_version == "3.1.1", country == "US") #both need to be true
+filter(tidy1, HomeTeam == "Arsenal") #filters Arsenal as Home Team, same as Excel
 
-filter(cran, country == "US" | country == "IN") #Or statement
+arse_home <- filter(tidy1, HomeTeam == "Arsenal") #create new variable for Arsenal at Home
 
-filter(cran, !is.na(r_version))
+filter(arse_home, HomeTeam == "Arsenal", HTHG > 1) #times Arsenal scored more than 1 goal at half-time
 
-cran2 <- select(cran, size:ip_id)
-arrange(cran2, ip_id)
-arrange(cran2, desc(ip_id))
+filter(arse_home, HTHG > 1 | HTAG > 1) #times Arsenal or the Oppositon scored more than 1 goal at half-time
+
+filter(prem, !is.na(r_version)) #checks for NAs, not relevant in this example
+
+arse_home2 <- select(arse_home, HomeTeam:AST)
+arrange(arse_home2, HST) #arrange by Home shots on target
+arrange(arse_home2, desc(HST)) #arranges asc by default, so this changes to desc
 
 
-cran3 <- select(cran, ip_id, package, size)
-mutate(cran3, size_mb = size / 2^20) #adds a new variable based on existing variable in dataset
-mutate(cran3, size_mb = size / 2^20, size_gb = size_mb / 2^10)
+mutate(arse_home2, total_shots = HST + AST) #adds a new column for total shots (for both teams)
+arse_home3 <- mutate(arse_home2, total_shots = HST + AST)
+
