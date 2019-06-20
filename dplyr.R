@@ -42,4 +42,15 @@ arrange(arse_home2, desc(HST)) #arranges asc by default, so this changes to desc
 
 mutate(arse_home2, total_shots = HST + AST) #adds a new column for total shots (for both teams)
 arse_home3 <- mutate(arse_home2, total_shots = HST + AST)
+arrange(arse_home3, desc(HST)) #arranges asc by default, so this changes to desc
+
+#Using the %>% operator to pipe output of function from left to right in one block
+
+arse_home %>%
+        select(HomeTeam:AST) %>%
+        mutate(total_shots = HST + AST) %>%
+        filter(HST <= 4) %>%
+        arrange(desc(HST))
+
+filter(arse_home3, AST > HST) #show games where away team had more shots than Home team
 
