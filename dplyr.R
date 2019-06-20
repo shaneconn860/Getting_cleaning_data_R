@@ -54,3 +54,4 @@ arse_home %>%
 
 filter(arse_home3, AST > HST) #show games where away team had more shots than Home team
 
+View(arse_home3) #Use View function for better display than using console for output
