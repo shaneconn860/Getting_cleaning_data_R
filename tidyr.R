@@ -22,4 +22,43 @@ students %>%
         separate(sex_class, c("sex", "class")) %>%
         print
 
+#Create 2nd 'messy' data frame
+name <- c('Sally','Sally','Jeff', 'Jeff', 'Roger', 'Roger')
+test <- c('midterm', 'final', 'midterm', 'final', 'midterm', 'final')
+class_1 <- c('A', 'C', NA, NA, NA, NA)
+class_2 <- c(NA, NA, 'D', 'E', 'C', 'A')
+class_3 <- c('B', 'C', NA, NA, NA, NA)
+class_4 <- c(NA, NA, 'A', 'C', NA, NA)
+class_5 <- c(NA, NA, NA, NA, 'B', 'A')
+students2 <- data.frame(name, test, class_1, class_2, class_3, class_4, class_5)
 
+#Gather columns class1-5 in to a new class column, with a value of grade, removing NAs also
+students2 %>%
+        gather(class, grade, class_1:class_5, na.rm = TRUE) %>%
+        print
+
+#Use separate to turn the values of the test column, midterm and final, into column headers (i.e. variables)
+students2 %>%
+        gather(class, grade, class_1:class_5, na.rm = TRUE) %>%
+        spread(test, grade) %>%
+        print
+
+#Remove class just leaving the number of the class, overwriting using mutate function
+students3 %>%
+        gather(class, grade, class1:class5, na.rm = TRUE) %>%
+        spread(test, grade) %>%
+        mutate(class = parse_number(class)) %>%
+        print
+
+#Makes sure id, name and sex are unique, eg, not repeated (not included in above data frame)
+student_info <- students4 %>%
+        select(id, name, sex) %>%
+        unique %>%
+        print
+
+#Creates new status column to the passed and failed tables
+passed <- passed %>% mutate(status = "passed")
+failed <- failed %>% mutate(status = "failed")
+
+#Combines rows of the 2 tables
+bind_rows(passed, failed)
