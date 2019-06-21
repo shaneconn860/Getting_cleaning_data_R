@@ -11,47 +11,70 @@ fileUrl <- "http://www.football-data.co.uk/mmz4281/1819/E0.csv"
 download.file(fileUrl, destfile = "./football_data/prem18_19.csv")
 edu <- read.csv("./football_data/prem18_19.csv")
 
-prem <- tbl_df(edu) #create data frame tbl
+#Create data frame tbl
+prem <- tbl_df(edu) 
 
-rm("edu") #remove original
+#Remove original table
+rm("edu") 
 
-select(prem, HomeTeam, AwayTeam, FTR) #displays teams and full-time result
+#Displays teams and full-time result
+select(prem, HomeTeam, AwayTeam, FTR) 
 
-select(prem, HomeTeam:HTR)  #gives list of columns from left to right in that sequence
+#Displays list of columns from left to right in that sequence
+select(prem, HomeTeam:HTR)  
 
-select(prem, -Referee) #omits Referee column
+#Omits 'Referee' column
+select(prem, -Referee) 
 
-select (prem, -Referee, -(B365H:PSCA)) #omits range of columns containing betting info and Referee
+#Omits range of columns containing betting info and Referee
+select (prem, -Referee, -(B365H:PSCA)) 
 
-tidy1 <- select (prem, -Div, -Referee, -(B365H:PSCA)) #create new variable to work with
+#Create new variable to work with
+tidy1 <- select (prem, -Div, -Referee, -(B365H:PSCA)) 
 
-filter(tidy1, HomeTeam == "Arsenal") #filters Arsenal as Home Team, same as Excel
+#Filters Arsenal as Home Team
+filter(tidy1, HomeTeam == "Arsenal") 
 
-arse_home <- filter(tidy1, HomeTeam == "Arsenal") #create new variable for Arsenal at Home
+#Create new variable for Arsenal at Home and previous edits
+arse_home <- filter(tidy1, HomeTeam == "Arsenal") 
 
-filter(arse_home, HomeTeam == "Arsenal", HTHG > 1) #times Arsenal scored more than 1 goal at half-time
+#Displays times Arsenal scored more than 1 goal at half-time
+filter(arse_home, HomeTeam == "Arsenal", HTHG > 1) 
 
-filter(arse_home, HTHG > 1 | HTAG > 1) #times Arsenal or the Oppositon scored more than 1 goal at half-time
+#Displays times Arsenal or the Oppositon scored more than 1 goal at half-time
+filter(arse_home, HTHG > 1 | HTAG > 1) 
 
-filter(prem, !is.na(r_version)) #checks for NAs, not relevant in this example
+#Checks for NAs, not relevant in this example
+filter(prem, !is.na(r_version)) 
 
+#Create new variable to show Arsenal to Away shots on target column
 arse_home2 <- select(arse_home, HomeTeam:AST)
-arrange(arse_home2, HST) #arrange by Home shots on target
-arrange(arse_home2, desc(HST)) #arranges asc by default, so this changes to desc
 
+#Arrange by Home shots on target
+arrange(arse_home2, HST) 
 
-mutate(arse_home2, total_shots = HST + AST) #adds a new column for total shots (for both teams)
-arse_home3 <- mutate(arse_home2, total_shots = HST + AST)
-arrange(arse_home3, desc(HST)) #arranges asc by default, so this changes to desc
+#Arranges asc by default, so this changes to desc
+arrange(arse_home2, desc(HST)) 
+
+#Adds a new column for total shots on target (for both teams)
+mutate(arse_home2, TST = HST + AST) 
+
+#Create new variable for this function
+arse_home3 <- mutate(arse_home2, TST = HST + AST)
+
+#Arranges asc by default, so this changes to desc
+arrange(arse_home3, desc(HST)) 
 
 #Using the %>% operator to pipe output of function from left to right in one block
 
 arse_home %>%
         select(HomeTeam:AST) %>%
-        mutate(total_shots = HST + AST) %>%
+        mutate(TST = HST + AST) %>%
         filter(HST <= 4) %>%
         arrange(desc(HST))
 
-filter(arse_home3, AST > HST) #show games where away team had more shots than Home team
+#Displays games where Away team had more shots than Home team
+filter(arse_home3, AST > HST) 
 
-View(arse_home3) #Use View function for better display than using console for output
+#Use View function on any of the above for better display than using R console for output
+View(arse_home3) 
