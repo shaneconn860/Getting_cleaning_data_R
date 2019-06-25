@@ -3,15 +3,15 @@ download_csv <- function() {
 
 #Create directory first
 
-if (!file.exists("./data4")) {
-        dir.create("./data4")
+if (!file.exists("./data")) {
+        dir.create("./data")
         }
 
 #Download file
         
-fileUrl <- "https://data.baltimorecity.gov/api/views/k5ry-ef3g/rows.csv?accessType=DOWNLOAD"
-download.file(fileUrl, destfile = "./data4/test.csv")
-camdata <- read.csv("./data4/test.csv")
+fileUrl <- "https://data.baltimorecity.gov/api/views/dz54-2aru/rows.csv?accessType=DOWNLOAD"
+download.file(fileUrl, destfile = "./data/cameras.csv")
+camdata <- read.csv("./data/cameras.csv")
 }
 
 #summary(camdata)
