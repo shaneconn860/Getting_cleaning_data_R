@@ -1,0 +1,514 @@
+---
+title: "Manipulating, Grouping and Chaining Data with dplyr"
+output: 
+  html_document:
+    keep_md: true
+---
+
+## Manipulating Data with dplyr
+
+### Specifically, dplyr supplies five ‘verbs’ that cover most fundamental data manipulation tasks: select(), filter(), arrange(), mutate(), and summarize().
+
+In this lesson, you'll learn how to manipulate data using dplyr. dplyr is a fast and powerful R package written by Hadley Wickham and Romain Francois that provides a consistent and concise grammar for manipulating tabular data.
+
+One unique aspect of dplyr is that the same set of tools allow you to work with tabular data from a variety of sources, including data frames, data tables, databases and multidimensional arrays. In this lesson, we'll focus on data frames, but everything you learn will apply equally to other formats.
+
+I've created a variable called path2csv, which contains the full file path to the dataset. Call read.csv() with two arguments, path2csv and stringsAsFactors = FALSE, and save the result in a new variable called mydf. Check ?read.csv if you need help.
+
+```{r}
+#path2csv <- read.csv("./2014-07-08.csv", header = TRUE, sep = ",")
+```
+
+```{r}
+mydf <- read.csv("./2014-07-08.csv", stringsAsFactors = FALSE, header = TRUE, sep =",")
+```
+
+Use dim() to look at the dimensions of mydf.
+
+```{r}
+dim(mydf)
+```
+
+Now use head() to preview the data.
+
+```{r}
+head(mydf)
+```
+
+The dplyr package was automatically installed (if necessary) and loaded at the beginning of this lesson. Normally, this is something you would have to do on your own. Just to build the habit, type library(dplyr) now to load the package again.
+
+```{r, results="hide"}
+library(dplyr)
+```
+
+It's important that you have dplyr version 0.4.0 or later. To confirm this, type packageVersion("dplyr").
+
+```{r}
+packageVersion("dplyr")
+```
+
+If your dplyr version is not at least 0.4.0, then you should hit the Esc key now, reinstall dplyr, then resume this lesson where you left off.
+
+The first step of working with data in dplyr is to load the data into what the package authors call a 'data frame tbl' or 'tbl_df'. Use the following code to create a new tbl_df called cran:
+ 
+ cran <- tbl_df(mydf).
+
+```{r}
+cran <- tbl_df(mydf)
+```
+
+To avoid confusion and keep things running smoothly, let's remove the original data frame from your workspace with rm("mydf").
+
+```{r}
+rm("mydf")
+```
+
+From ?tbl_df, "The main advantage to using a tbl_df over a regular data frame is the printing." Let's see what is meant by this. Type cran to print our tbl_df to the console.
+
+```{r}
+cran
+```
+
+This output is much more informative and compact than what we would get if we printed the original data frame (mydf) to the console.
+
+First, we are shown the class and dimensions of the dataset. Just below that, we get a preview of the data. Instead of attempting to print the entire dataset, dplyr just shows us the first 10 rows of data and only as many columns as fit neatly in our console. At the bottom, we see the names and classes for any variables that didn't fit on our screen.
+
+According to the "Introduction to dplyr" vignette written by the package authors, "The dplyr philosophy is to have small functions that each do one thing well." Specifically, dplyr supplies five 'verbs' that cover most fundamental data manipulation tasks: select(), filter(), arrange(), mutate(), and summarize().
+
+As may often be the case, particularly with larger datasets, we are only interested in some of the variables. Use select(cran, ip_id, package, country) to select only the ip_id, package, and country variables from the cran dataset.
+
+```{r}
+select(cran, ip_id, package, country)
+```
+
+The first thing to notice is that we don't have to type cran$ip_id, cran$package, and cran$country, as we normally would when referring to columns of a data frame. The select() function knows we are referring to columns of the cran dataset.
+
+Also, note that the columns are returned to us in the order we specified, even though ip_id is the rightmost column in the original dataset.
+
+Recall that in R, the `:` operator provides a compact notation for creating a sequence of numbers. For example, try 5:20.
+
+```{r}
+5:20
+```
+
+Normally, this notation is reserved for numbers, but select() allows you to specify a sequence of columns this way, which can save a bunch of typing. Use select(cran, r_arch:country) to select all columns starting from r_arch and ending with country.
+
+```{r}
+select(cran, r_arch:country)
+```
+
+We can also select the same columns in reverse order. Give it a try.
+
+```{r}
+select(cran, country:r_arch)
+```
+
+Print the entire dataset again, just to remind yourself of what it looks like. You can do this at anytime during the lesson.
+
+```{r}
+cran
+```
+
+Instead of specifying the columns we want to keep, we can also specify the columns we want to throw away. To see how this works, do select(cran, -time) to omit the time column.
+
+```{r}
+select(cran, -time)
+```
+
+The negative sign in front of time tells select() that we DON'T want the time column. Now, let's combine strategies to omit all columns from X through size (X:size). To see how this might work, let's look at a numerical example with -5:20.
+
+```{r}
+-5:20
+```
+
+That gaves us a vector of numbers from -5 through 20, which is not what we want. Instead, we want to negate the entire sequence of numbers from 5 through 20, so that we get -5, -6, -7, ... , -18, -19, -20. Try the same thing, except surround 5:20 with parentheses so that R knows we want it to first come up with the sequence of numbers, then apply the negative sign to the whole thing.
+
+```{r}
+-(5:20)
+```
+
+Use this knowledge to omit all columns X:size using select().
+
+```{r}
+select(cran, -(X:size))
+```
+
+Now that you know how to select a subset of columns using select(), a natural next question is "How do I select a subset of rows?" That's where the filter() function comes in.
+
+Use filter(cran, package == "swirl") to select all rows for which the package variable is equal to "swirl". Be sure to use two equals signs side-by-side!
+
+```{r}
+filter(cran, package == "swirl")
+```
+
+Again, note that filter() recognizes 'package' as a column of cran, without you having to explicitly specify cran$package.
+
+The == operator asks whether the thing on the left is equal to the thing on the right. If yes, then it returns TRUE. If no, then FALSE. In this case, package is an entire vector (column) of values, so package == "swirl" returns a vector of TRUEs and FALSEs. filter() then returns only the rows of cran corresponding to the TRUEs.
+
+You can specify as many conditions as you want, separated by commas. For example filter(cran, r_version == "3.1.1", country == "US") will return all rows of cran corresponding to downloads from users in the US running R version 3.1.1. Try it out.
+
+```{r}
+filter(cran, r_version == "3.1.1", country == "US")
+```
+
+The conditions passed to filter() can make use of any of the standard comparison operators. Pull up the relevant documentation with ?Comparison (that's an uppercase C).
+
+Edit your previous call to filter() to instead return rows corresponding to users in "IN" (India) running an R version that is less than or equal to "3.0.2". The up arrow on your keyboard may come in handy here. Don't forget your double quotes!
+
+```{r}
+filter(cran, r_version <= "3.0.2", country == "IN")
+```
+
+Our last two calls to filter() requested all rows for which some condition AND another condition were TRUE. We can also request rows for which EITHER one condition OR another condition are TRUE. For example, filter(cran, country == "US" | country == "IN") will gives us all rows for which the country variable equals either "US" or "IN". Give it a go.
+
+```{r}
+filter(cran, country == "US" | country == "IN")
+```
+
+Now, use filter() to fetch all rows for which size is strictly greater than (>) 100500 (no quotes, since size is numeric) AND r_os equals "linux-gnu". Hint: You are passing three arguments to filter(): the name of the dataset, the first condition, and the second condition.
+
+```{r}
+filter(cran, size > 100500, r_os == "linux-gnu")
+```
+
+Finally, we want to get only the rows for which the r_version is not missing. R represents missing values with NA and these missing values can be detected using the is.na() function.
+
+To see how this works, try is.na(c(3, 5, NA, 10)).
+
+```{r}
+is.na(c(3, 5, NA, 10))
+```
+
+Now, put an exclamation point (!) before is.na() to change all of the TRUEs to FALSEs and all of the FALSEs to TRUEs, thus telling us what is NOT NA: !is.na(c(3, 5, NA, 10)).
+
+```{r}
+!is.na(c(3, 5, NA, 10))
+```
+
+Okay, ready to put all of this together? Use filter() to return all rows of cran for which r_version is NOT NA. Hint: You will need to use !is.na() as part of your second argument to filter().
+
+```{r}
+filter(cran, !is.na(r_version))
+```
+
+We've seen how to select a subset of columns and rows from our dataset using select() and filter(), respectively. Inherent in select() was also the ability to arrange our selected columns in any order we please.
+
+Sometimes we want to order the rows of a dataset according to the values of a particular variable. This is the job of arrange().
+
+To see how arrange() works, let's first take a subset of cran. select() all columns from size through ip_id and store the result in cran2.
+
+```{r}
+cran2 <- select(cran, size:ip_id)
+```
+
+Now, to order the ROWS of cran2 so that ip_id is in ascending order (from small to large), type arrange(cran2, ip_id). You may want to make your console wide enough so that you can see ip_id, which is the last column.
+
+```{r}
+arrange(cran2, ip_id)
+```
+
+To do the same, but in descending order, change the second argument to desc(ip_id), where desc() stands for 'descending'. Go ahead.
+
+```{r}
+arrange(cran2, desc(ip_id))
+```
+
+We can also arrange the data according to the values of multiple variables. For example, arrange(cran2, package, ip_id) will first arrange by package names (ascending alphabetically), then by ip_id. This means that if there are multiple rows with the same value for package, they will be sorted by ip_id (ascending numerically). Try arrange(cran2, package, ip_id) now.
+
+```{r}
+arrange(cran2, package, ip_id)
+```
+
+Arrange cran2 by the following three variables, in this order: country (ascending), r_version (descending), and ip_id (ascending).
+
+```{r}
+arrange(cran2, country, desc(r_version), ip_id)
+```
+
+To illustrate the next major function in dplyr, let's take another subset of our original data. Use select() to grab 3 columns from cran -- ip_id, package, and size (in that order) -- and store the result in a new variable called cran3.
+
+```{r}
+cran3 <- select(cran, ip_id, package, size)
+```
+
+```{r}
+cran3
+```
+
+It's common to create a new variable based on the value of one or more variables already in a dataset. The mutate() function does exactly this.
+
+The size variable represents the download size in bytes, which are units of computer memory. These days, megabytes (MB) are a more common unit of measurement. One megabyte is equal to 2^20 bytes. That's 2 to the power of 20, which is approximately one million bytes!
+
+We want to add a column called size_mb that contains the download size in megabytes. Here's the code to do it: mutate(cran3, size_mb = size / 2^20)
+
+```{r}
+mutate(cran3, size_mb = size / 2^20)
+```
+
+An even larger unit of memory is a gigabyte (GB), which equals 2^10 megabytes. We might as well add another column for download size in gigabytes!
+
+One very nice feature of mutate() is that you can use the value computed for your second column (size_mb) to create a third column, all in the same line of code. To see this in action, repeat the exact same command as above, except add a third argument creating a column that is named size_gb and equal to size_mb / 2^10.
+
+```{r}
+mutate(cran3, size_mb = size / 2^20, size_gb = size_mb / 2^10)
+```
+
+Let's try one more for practice. Pretend we discovered a glitch in the system that provided the original values for the size variable. All of the values in cran3 are 1000 bytes less than they should be. Using cran3, create just one new column called correct_size that contains the correct size.
+
+```{r}
+mutate(cran3, correct_size = size + 1000)
+```
+
+The last of the five core dplyr verbs, summarize(), collapses the dataset to a single row. Let's say we're interested in knowing the average download size. summarize(cran, avg_bytes = mean(size)) will yield the mean value of the size variable. Here we've chosen to label the result 'avg_bytes', but we could have named it anything. Give it a try.
+
+```{r}
+summarize(cran, avg_bytes = mean(size))
+```
+
+That's not particularly interesting. summarize() is most useful when working with data that has been grouped by the values of a particular variable.
+
+We'll look at grouped data in the next lesson, but the idea is that summarize() can give you the requested value FOR EACH group in your dataset.
+
+In this lesson, you learned how to manipulate data using dplyr's five main functions. In the next lesson, we'll look at how to take advantage of some other useful features of dplyr to make your life as a data analyst much easier.
+
+## Grouping and Chaining with dplyr
+
+In the last lesson, you learned about the five main data manipulation 'verbs' in dplyr: select(), filter(), arrange(), mutate(), and summarize(). The last of these, summarize(), is most powerful when applied to grouped data.
+
+The main idea behind grouping data is that you want to break up your dataset into groups of rows based on the values of one or more variables. The group_by() function is reponsible for doing this.
+
+We'll continue where we left off with RStudio's CRAN download log from July 8, 2014, which contains information on roughly 225,000 R package downloads (http://cran-logs.rstudio.com/).
+
+I've made the dataset available to you in a data frame called mydf. Put it in a 'data frame tbl' using the tbl_df() function and store the result in a object called cran. If you're not sure what I'm talking about, you should start with the previous lesson. Otherwise, practice
+| makes perfect!
+
+```{r}
+#cran <- tbl_df(mydf)
+```
+
+To avoid confusion and keep things running smoothly, let's remove the original dataframe from your workspace with rm("mydf").
+
+```{r}
+#rm("mydf")
+```
+
+Print cran to the console.
+
+```{r}
+cran
+```
+
+Our first goal is to group the data by package name. Bring up the help file for group_by().
+
+Group cran by the package variable and store the result in a new object called by_package.
+
+```{r}
+by_package <- group_by(cran, package)
+```
+
+Let's take a look at by_package. Print it to the console.
+
+```{r}
+by_package
+```
+
+At the top of the output above, you'll see 'Groups: package', which tells us that this tbl has been grouped by the package variable. Everything else looks the same, but now any operation we apply to the grouped data will take place on a per package basis.
+
+Recall that when we applied mean(size) to the original tbl_df via summarize(), it returned a single number -- the mean of all values in the size column. We may care about what that number is, but wouldn't it be so much more interesting to look at the mean download size for each unique package?
+
+That's exactly what you'll get if you use summarize() to apply mean(size) to the grouped data in by_package. Give it a shot.
+
+```{r}
+summarize(by_package, mean(size))
+```                                                                                     
+
+Instead of returning a single value, summarize() now returns the mean size for EACH package in our dataset.
+
+Let's take it a step further. I just opened an R script for you that contains a partially constructed call to summarize(). Follow the instructions in the script comments.
+
+```{r}
+pack_sum <- summarize(by_package,
+                      count = n(),
+                      unique = n_distinct(ip_id),
+                      countries = n_distinct(country),
+                      avg_bytes = mean(size))
+```
+
+Print the resulting tbl, pack_sum, to the console to examine its contents.
+
+```{r}
+pack_sum
+```
+
+The 'count' column, created with n(), contains the total number of rows (i.e. downloads) for each package. The 'unique' column, created with n_distinct(ip_id), gives the total number of unique downloads for each package, as measured by the number of distinct ip_id's. The 'countries' column, created with n_distinct(country), provides the number of countries in which each package was downloaded. And finally, the 'avg_bytes' column, created with mean(size), contains the mean download size (in bytes) for each package.
+
+It's important that you understand how each column of pack_sum was created and what it means. Now that we've summarized the data by individual packages, let's play around with it some more to see what we can learn.
+
+Naturally, we'd like to know which packages were most popular on the day these data were collected (July 8, 2014). Let's start by isolating the top 1% of packages, based on the total number of downloads as measured by the 'count' column.
+
+We need to know the value of 'count' that splits the data into the top 1% and bottom 99% of packages based on total downloads. In statistics, this is called the 0.99, or 99%, sample quantile. Use quantile(pack_sum$count, probs = 0.99) to determine this number.
+
+```{r}
+quantile(pack_sum$count, probs = 0.99)
+```
+
+Now we can isolate only those packages which had more than 679 total downloads. Use filter() to select all rows from pack_sum for which 'count' is strictly greater (>) than 679. Store the result in a new object called top_counts.
+
+```{r}
+top_counts <- filter(pack_sum, count > 679)
+```
+
+Let's take a look at top_counts. Print it to the console.
+
+```{r}
+top_counts
+```
+
+There are only 61 packages in our top 1%, so we'd like to see all of them. Since dplyr only shows us the first 10 rows, we can use the View() function to see more.  
+  
+```{r}
+#View(top_counts)
+```
+
+arrange() the rows of top_counts based on the 'count' column and assign the result to a new object called top_counts_sorted. We want the packages with the highest number of downloads at the top, which means we want 'count' to be in descending order. If you need help, check out ?arrange and/or ?desc.
+
+```{r}
+top_counts_sorted <- arrange(top_counts, desc(count))
+```
+
+Now use View() again to see all 61 rows of top_counts_sorted.
+
+```{r}
+#View(top_counts_sorted)
+```
+
+If we use total number of downloads as our metric for popularity, then the above output shows us the most popular packages downloaded from the RStudio CRAN mirror on July 8, 2014. Not surprisingly, ggplot2 leads the pack with 4602 downloads, followed by Rcpp, plyr, rJava, ....
+
+And if you keep on going, you'll see swirl at number 43, with 820 total downloads. Sweet!
+
+Perhaps we're more interested in the number of *unique* downloads on this particular day. In other words, if a package is downloaded ten times in one day from the same computer, we may wish to count that as only one download. That's what the 'unique' column will tell us.
+
+Like we did with 'count', let's find the 0.99, or 99%, quantile for the 'unique' variable with quantile(pack_sum$unique, probs = 0.99).
+
+```{r}
+quantile(pack_sum$unique, probs = 0.99)
+```
+
+Apply filter() to pack_sum to select all rows corresponding to values of 'unique' that are strictly greater than 465. Assign the result to a object called top_unique.
+
+```{r}
+top_unique <- filter(pack_sum, unique > 465)
+```
+
+Let's View() our top contenders!
+
+```{r}
+#View(top_unique)
+```
+
+Now arrange() top_unique by the 'unique' column, in descending order, to see which packages were downloaded from the greatest number of unique IP addresses. Assign the result to top_unique_sorted.
+
+```{r}
+top_unique_sorted <- arrange(top_unique, desc(unique))
+```
+
+View() the sorted data.
+
+```{r}
+#View(top_unique_sorted)
+```
+
+Now Rcpp is in the lead, followed by stringr, digest, plyr, and ggplot2. swirl moved up a few spaces to number 40, with 698 unique downloads. Nice!
+
+Our final metric of popularity is the number of distinct countries from which each package was downloaded. We'll approach this one a little differently to introduce you to a method called 'chaining' (or 'piping').
+
+Chaining allows you to string together multiple function calls in a way that is compact and readable, while still accomplishing the desired result. To make it more concrete, let's compute our last popularity metric from scratch, starting with our original data.
+
+I've opened up a script that contains code similar to what you've seen so far. Don't change anything. Just study it for a minute, make sure you understand everything that's there, then submit() when you are ready to move on.
+
+```{r}
+        by_package <- group_by(cran, package)
+        pack_sum <- summarize(by_package,
+                              count = n(),
+                              unique = n_distinct(ip_id),
+                              countries = n_distinct(country),
+                              avg_bytes = mean(size))
+```
+
+It's worth noting that we sorted primarily by country, but used avg_bytes (in ascending order) as a tie breaker. This means that if two packages were downloaded from the same number of countries, the package with a smaller average download size received a higher ranking.
+
+We'd like to accomplish the same result as the last script, but avoid saving our intermediate results. This requires embedding function calls within one another.
+
+```{r}
+        top_countries <- filter(pack_sum, countries > 60)
+        result1 <- arrange(top_countries, desc(countries), avg_bytes)
+        
+        # Print the results to the console.
+        print(result1)
+```        
+
+That's exactly what we've done in this script. The result is equivalent, but the code is much less readable and some of the arguments are far away from the function to which they belong. Again, just try to understand what is going on here, then submit() when you are ready to see a better solution.
+
+In this script, we've used a special chaining operator, %>%, which was originally introduced in the magrittr R package and has now become a key component of dplyr. You can pull up the related documentation with ?chain. The benefit of %>% is that it allows us to chain the function calls in a linear fashion. The code to the right of %>% operates on the result from the code to the left of %>%.
+
+```{r}
+                result2 <-
+                arrange(
+                        filter(
+                                summarize(
+                                        group_by(cran,
+                                                 package
+                                        ),
+                                        count = n(),
+                                        unique = n_distinct(ip_id),
+                                        countries = n_distinct(country),
+                                        avg_bytes = mean(size)
+                                ),
+                                countries > 60
+                        ),
+                        desc(countries),
+                        avg_bytes
+                )
+        
+        print(result2)
+```        
+
+So, the results of the last three scripts are all identical. But, the third script provides a convenient and concise alternative to the more traditional method that we've taken previously, which involves saving results as we go along.
+
+```{r}
+                result3 <-
+                cran %>%
+                group_by(package) %>%
+                summarize(count = n(),
+                          unique = n_distinct(ip_id),
+                          countries = n_distinct(country),
+                          avg_bytes = mean(size)
+                ) %>%
+                filter(countries > 60) %>%
+                arrange(desc(countries), avg_bytes)
+        
+        # Print result to console
+        print(result3)
+```        
+
+Once again, let's View() the full data, which has been stored in result3.
+
+```{r}
+#View(result3)
+```
+
+It looks like Rcpp is on top with downloads from 84 different countries, followed by digest, stringr, plyr, and ggplot2. swirl jumped up the rankings again, this time to 27th.
+
+To help drive the point home, let's work through a few more examples of chaining.
+
+Let's build a chain of dplyr commands one step at a time, starting with the script I just opened for you.
+
+```{r}
+                cran %>%
+                select(ip_id, country, package, size) %>%
+                mutate(size_mb = size / 2^20) %>%
+                filter(size_mb <= 0.5) %>%
+                arrange(desc(size_mb))
+```
+
+In this lesson, you learned about grouping and chaining using dplyr. You combined some of the things you learned in the previous lesson with these more advanced ideas to produce concise, readable, and highly effective code. Welcome to the wonderful world of dplyr!
